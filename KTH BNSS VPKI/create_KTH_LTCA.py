@@ -6,7 +6,7 @@ import random
 # Dedicated libs
 import xmlrpc.client
 from cryptography import x509
-from cryptography.x509.oid import NameOID, ObjectIdentifier
+from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -20,7 +20,7 @@ clientXML = xmlrpc.client.ServerProxy(uri=adress)
 def get_x509_csr(hostname: str):
     # Create and write private key to file
     private_key = ec.generate_private_key(
-        ec.SECP192R1(), False
+        ec.SECP192R1()
     )
     with open("key.pem", "wb") as f:
         f.write(private_key.private_bytes(
@@ -89,7 +89,7 @@ def main():
     print(cert)
 
     # Save Certificate 
-    with open("ltca-signed-cert.pem", "w") as f:
+    with open("ltca-signed.crt", "w") as f:
         f.write(cert)
 
 if __name__ == "__main__":
