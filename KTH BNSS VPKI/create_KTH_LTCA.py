@@ -4,7 +4,6 @@ import time
 import random
 
 # Dedicated libs
-import requests
 import xmlrpc.client
 from cryptography import x509
 from cryptography.x509.oid import NameOID, ObjectIdentifier
@@ -15,8 +14,7 @@ import interfaces_pb2
 
 
 REQ_X509_CERT_REQ_VEHICLE_TO_LTCA_USING_PROTO_BUFF = 122
-
-adress = "https://nsscore.ict.kth.se:30930/cgi-bin/ltca"
+adress = "http://nsscore.ict.kth.se:30930/cgi-bin/ltca"
 clientXML = xmlrpc.client.ServerProxy(uri=adress)
 
 def get_x509_csr(hostname: str):
@@ -34,7 +32,7 @@ def get_x509_csr(hostname: str):
         x509.NameAttribute(NameOID.COUNTRY_NAME, "SE"),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "ACME"),
         x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-        x509.NameAttribute(NameOID.EMAIL_ADRESS, "lukasla.edu@gmail.com")
+        x509.NameAttribute(NameOID.EMAIL_ADDRESS, "lannge@kth.se")
     ])
 
     san = x509.SubjectAlternativeName([x509.DNSName(hostname)])
@@ -45,20 +43,15 @@ def get_x509_csr(hostname: str):
     return csr
         
 def cert_from_rpc_response(rpc_response):
-    (response_code, response) = rpc_response
-    print("Response code: ", response_code)
     # Response is base64 encoded
-    data = base64.b64decode(response)
+    data = base64.b64decode(rpc_response)
 
     # Decoded data need to be parsed to Python ProtoBuf format
     msgX509CertRes_LTCA2V = interfaces_pb2.msgX509CertRes_LTCA2V()
     msgX509CertRes_LTCA2V.ParseFromString(data)
 
-    # Translate into a certificate
-    cert = x509.load_pem_x509_certificate(bytes(msgX509CertRes_LTCA2V.strX509Cert, "UTF-8"))
-    
-    print("Retrieved certificate: ")
-    print(cert.public_bytes(serialization.Encoding.PEM).decode())
+    # Take the cert
+    return msgX509CertRes_LTCA2V.strX509Cert
 
 def request_x509_cert(csr: str):
     # Create the proto buffer using proto3.proto
@@ -74,25 +67,30 @@ def request_x509_cert(csr: str):
     msgX509CertReq_V2LTCA.strDNSExtension = ""
     serialzed_to_string = msgX509CertReq_V2LTCA.SerializeToString()
     encoded_req = base64.b64encode(serialzed_to_string)
-    print("Raw: ")
-    print(serialzed_to_string)
-    print("\nEncoded: ")
-    print(encoded_req)
-    # return (0, encoded_req)
-    return clientXML.ltca.operate(REQ_X509_CERT_REQ_VEHICLE_TO_LTCA_USING_PROTO_BUFF, encoded_req)
+    str_req = encoded_req.decode("utf-8")
+    # print("Raw: ")
+    # print(serialzed_to_string)
+    # print("\nEncoded: ")
+    # print(str_req)
+    return clientXML.ltca.operate(REQ_X509_CERT_REQ_VEHICLE_TO_LTCA_USING_PROTO_BUFF, str_req)
 
 def main():
     x509_csr: x509.CertificateSigningRequest = get_x509_csr("www.acme.se")
 
     # The NSS RCEXML format requires a str version of the x509 cert
     x509_csr_string = x509_csr.public_bytes(serialization.Encoding.PEM).decode("UTF-8")
+
+    # Send request
     response = request_x509_cert(x509_csr_string)
 
-    # cert: x509.Certificate = cert_from_rpc_response(response)
+    # Process response
+    cert = cert_from_rpc_response(response)
+    print("XMLRPC replied with:")
+    print(cert)
 
     # Save Certificate 
-    # with open("server_cert.pem", "wb") as f:
-    #     f.write(cert.public_bytes(serialization.Encoding.PEM))
+    with open("ltca-signed-cert.pem", "w") as f:
+        f.write(cert)
 
 if __name__ == "__main__":
     main()
