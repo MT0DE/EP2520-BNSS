@@ -30,12 +30,11 @@ def get_x509_csr(hostname: str):
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption()
     ))
-    email: NameOID = "emailAdress"
     name = x509.Name([
         x509.NameAttribute(NameOID.COUNTRY_NAME, "SE"),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "ACME"),
         x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-        x509.NameAttribute(email, "lukasla.edu@gmail.com")
+        x509.NameAttribute(NameOID.EMAIL_ADRESS, "lukasla.edu@gmail.com")
     ])
 
     san = x509.SubjectAlternativeName([x509.DNSName(hostname)])
@@ -80,8 +79,6 @@ def request_x509_cert(csr: str):
     print("\nEncoded: ")
     print(encoded_req)
     # return (0, encoded_req)
-    website = requests.get("https://www.exemple.com")
-    print(website)
     return clientXML.ltca.operate(REQ_X509_CERT_REQ_VEHICLE_TO_LTCA_USING_PROTO_BUFF, encoded_req)
 
 def main():
