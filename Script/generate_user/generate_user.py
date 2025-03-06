@@ -12,12 +12,17 @@ import datetime
 from dotenv import load_dotenv
 
 '''
+pip install -r .\requirements.txt
+
+usage: generate_user.py [-h] -f FIRSTNAME -l LASTNAME -p PASSWORD
+
 needs .env with the following to work:
 SERVER_URL="<url>"
 CLIENT_SECRET_KEY=<client_secret>"
 USERNAME_REALM="<username>"
 PASSWORD_REALM="<password>"
 '''
+
 
 def generate_user(server_url, client_secret_key, username, password):
     user = {"email": email,
@@ -189,6 +194,7 @@ def create_and_sign_certificate(username, email, ca_cert_path="./rootCerts/rootC
 
 if __name__ == '__main__':
     load_dotenv()
+    
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-f', '--firstname', help='First name of user', required=True)
     parser.add_argument('-l', '--lastname', help='Last name of user', required=True)
@@ -213,16 +219,24 @@ if __name__ == '__main__':
     else:
         username = args["username"]
     if not args["rootcert"]:
-        ca_cert_path="./rootCerts/rootCA.crt"
-        ca_key_path="./rootCerts/rootCA.key"
+        ca_cert_path = "./rootCerts/rootCA.crt"
+        ca_key_path = "./rootCerts/rootCA.key"
     else:
         cert_path = args["rootcert"]
         ca_cert_path = cert_path + "/rootCA.crt"
         ca_key_path = cert_path + "/rootCA.key"
 
-    email = username + random + "@example.com"
+    email = username + random + "@acme.com"
 
     print(f"...Creating user {username} and generating certificate ")
-    generate_user(username=os.getenv("USERNAME_REALM"), password=os.getenv("PASSWORD"),
-                 client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("PASSWORD_REALM"))
-    create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
+    try:
+        generate_user(username=os.getenv("USERNAME_REALM"), password=os.getenv("PASSWORD"),
+                      client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("PASSWORD_REALM"))
+    except:
+        raise Exception(f"Error creating user{username} ... aborting")
+
+    try:
+        create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
+    except:
+        raise Exception(
+            f"error creating certificate for {username, email}, is {ca_cert_path} or {ca_key_path} correct?")
