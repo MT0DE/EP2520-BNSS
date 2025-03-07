@@ -1,1 +1,5 @@
 Script/generate_user/.env
+/Script/generate_user/rootCerts
+Script/generate_user/.idea/generate_user.iml
+Script/generate_user/.idea/inspectionProfiles/profiles_settings.xml
+*.xml

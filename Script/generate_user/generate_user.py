@@ -12,11 +12,11 @@ import datetime
 from dotenv import load_dotenv
 
 '''
-pip install -r .\requirements.txt
+pip install -r requirements.txt
 
-usage: generate_user.py [-h] -f FIRSTNAME -l LASTNAME -p PASSWORD
+usage: generate_user.py [-h] -f FIRSTNAME -l LASTNAME -p PASSWORD [-c ROOTCERT] [-u USERNAME]
 
-needs .env with the following to work:
+needs .env with the following to work (for the realm & specific client):
 SERVER_URL="<url>"
 CLIENT_SECRET_KEY=<client_secret>"
 USERNAME_REALM="<username>"
@@ -24,7 +24,7 @@ PASSWORD_REALM="<password>"
 '''
 
 
-def generate_user(server_url, client_secret_key, username, password):
+def generate_user(server_url, client_secret_key, username_realm, password_realm):
     user = {"email": email,
             "username": username,
             "enabled": True,
@@ -34,8 +34,8 @@ def generate_user(server_url, client_secret_key, username, password):
     try:
         keycloak_connection_cert = KeycloakOpenIDConnection(
             server_url=server_url,
-            username=username,
-            password=password,
+            username=username_realm,
+            password=password_realm,
             realm_name="CertLogin",
             client_id="create-user",
             client_secret_key=client_secret_key,
@@ -43,13 +43,12 @@ def generate_user(server_url, client_secret_key, username, password):
 
         keycloak_connection_actual_cert = KeycloakOpenIDConnection(
             server_url=server_url,
-            username=username,
-            password=password,
+            username=username_realm,
+            password=password_realm,
             realm_name="ActualCertLogin",
             client_id="create-user",
             client_secret_key=client_secret_key,
             verify=False)
-
         keycloak_cert = KeycloakAdmin(connection=keycloak_connection_cert)
         keycloak_actual_cert = KeycloakAdmin(connection=keycloak_connection_actual_cert)
 
@@ -109,7 +108,6 @@ def sign_csr_with_ca(csr_file_path, ca_cert_path, ca_key_path, cert_file_path, v
     with open(ca_key_path, "rb") as f:
         ca_key = serialization.load_pem_private_key(f.read(), password=None)
 
-    import os
     serial_number = int.from_bytes(os.urandom(16), byteorder="big")
 
     now = datetime.datetime.now(datetime.UTC)
@@ -194,7 +192,6 @@ def create_and_sign_certificate(username, email, ca_cert_path="./rootCerts/rootC
 
 if __name__ == '__main__':
     load_dotenv()
-    
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-f', '--firstname', help='First name of user', required=True)
     parser.add_argument('-l', '--lastname', help='Last name of user', required=True)
@@ -229,14 +226,7 @@ if __name__ == '__main__':
     email = username + random + "@acme.com"
 
     print(f"...Creating user {username} and generating certificate ")
-    try:
-        generate_user(username=os.getenv("USERNAME_REALM"), password=os.getenv("PASSWORD"),
-                      client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("PASSWORD_REALM"))
-    except:
-        raise Exception(f"Error creating user{username} ... aborting")
 
-    try:
-        create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
-    except:
-        raise Exception(
-            f"error creating certificate for {username, email}, is {ca_cert_path} or {ca_key_path} correct?")
+    generate_user(username_realm=os.getenv("USERNAME_REALM"), password_realm=os.getenv("PASSWORD_REALM"),
+                  client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("SERVER_URL"))
+    create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
