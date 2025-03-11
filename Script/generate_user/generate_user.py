@@ -220,13 +220,9 @@ if __name__ == '__main__':
         username = first_name[0:3] + last_name[0:3] + random
     else:
         username = args["username"]
-    if not args["rootcert"]:
-        ca_cert_path = "./rootCerts/rootCA.crt"
-        ca_key_path = "./rootCerts/rootCA.key"
-    else:
-        cert_path = args["rootcert"]
-        ca_cert_path = cert_path + "/rootCA.crt"
-        ca_key_path = cert_path + "/rootCA.key"
+
+    ca_cert_path = "./rootCerts/rootCA.crt"
+    ca_key_path = "./rootCerts/rootCA.key"
 
     email = username + "@acme.com"
 
