@@ -10,7 +10,7 @@ def get_opnsense_last_uid(xml_root):
     user_elements = user_tree.findall('user')
     return max([int(u.find('uid').text) if u.find('uid') != None else 1 for u in user_elements])
 
-def add_user_cert(xml_root, crt_path, prv_path):
+def add_user_cert(xml_root, username, crt_path, prv_path):
     with open(crt_path, 'r') as f:
         crt = f.read()
     
@@ -31,10 +31,10 @@ def add_user_cert(xml_root, crt_path, prv_path):
     refid_element.text = rnd_id
 
     descr_element = ET.SubElement(cert_element, "descr")
-    descr_element.text = "Automatically generated certificate"
+    descr_element.text = f"{username}'s Certificate"
 
     caref_element = ET.SubElement(cert_element, "caref")
-    caref_element.text = "67b48a76ed935"
+    caref_element.text = "67bdae84c7bf1"
 
     crt_element = ET.SubElement(cert_element, "crt")
     crt_element.text = crt64
@@ -123,7 +123,7 @@ def add_opnsense_user_and_cert(username, email, password, crt_path, prv_path):
     root = tree.getroot()
     add_opnsense_user(root, username, email, password)
     add_radius_user(root, username, email, password)
-    add_user_cert(root, crt_path, prv_path)
+    add_user_cert(root, username, crt_path, prv_path)
     tree.write('/conf/config.xml')
     print("Saved the config")
 
