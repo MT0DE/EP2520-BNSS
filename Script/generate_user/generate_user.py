@@ -112,7 +112,7 @@ def sign_csr_with_ca(csr_file_path, ca_cert_path, ca_key_path, cert_file_path, v
     with open(ca_key_path, "rb") as f:
         ca_key = serialization.load_pem_private_key(f.read(), password=None)
 
-    serial_number = int.from_bytes(os.urandom(16), byteorder="big")
+    serial_number = 10 #int.from_bytes(os.urandom(16), byteorder="big")
     now = datetime.datetime.now(datetime.UTC)
 
     cert_builder = x509.CertificateBuilder().subject_name(
