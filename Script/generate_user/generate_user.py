@@ -79,8 +79,9 @@ def generate_private_key(key_file_path):
 
 def generate_csr(private_key, email_address, common_name, country_name,
                  locality_name, state_or_province_name, organization_name,
-                 organization_unit_name, csr_file):
-    csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+                 organization_unit_name, csr_file, ca_cert):
+
+    csr_builder = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
         x509.NameAttribute(NameOID.EMAIL_ADDRESS, email_address),
         x509.NameAttribute(NameOID.COUNTRY_NAME, country_name),
@@ -88,7 +89,9 @@ def generate_csr(private_key, email_address, common_name, country_name,
         x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, state_or_province_name),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization_name),
         x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organization_unit_name),
-    ])).sign(private_key, hashes.SHA256())
+    ]))
+
+    csr = csr_builder.sign(private_key, hashes.SHA256())
 
     os.makedirs(os.path.dirname(csr_file), exist_ok=True)
 
@@ -109,10 +112,9 @@ def sign_csr_with_ca(csr_file_path, ca_cert_path, ca_key_path, cert_file_path, v
         ca_key = serialization.load_pem_private_key(f.read(), password=None)
 
     serial_number = int.from_bytes(os.urandom(16), byteorder="big")
-
     now = datetime.datetime.now(datetime.UTC)
 
-    cert = x509.CertificateBuilder().subject_name(
+    cert_builder = x509.CertificateBuilder().subject_name(
         csr.subject
     ).issuer_name(
         ca_cert.subject
@@ -124,12 +126,16 @@ def sign_csr_with_ca(csr_file_path, ca_cert_path, ca_key_path, cert_file_path, v
         now
     ).not_valid_after(
         now + datetime.timedelta(days=validity_days)
-    ).add_extension(
-        x509.BasicConstraints(ca=False, path_length=None), critical=True
-    ).sign(ca_key, hashes.SHA256())
+    )
+
+    # Copy extensions from CSR
+    for extension in csr.extensions:
+        cert_builder = cert_builder.add_extension(extension.value, extension.critical)
+
+    # Sign the certificate
+    cert = cert_builder.sign(ca_key, hashes.SHA256())
 
     os.makedirs(os.path.dirname(cert_file_path), exist_ok=True)
-
     with open(cert_file_path, "wb") as f:
         f.write(cert.public_bytes(serialization.Encoding.PEM))
 
@@ -167,7 +173,8 @@ def create_and_sign_certificate(username, email, ca_cert_path="./rootCerts/rootC
     p12_file = f"{user_folder}/{username}.p12"
 
     private_key = generate_private_key(key_file)
-
+    with open(ca_cert_path, "rb") as f:
+        ca_cert = x509.load_pem_x509_certificate(f.read())
     generate_csr(
         private_key=private_key,
         email_address=email,
@@ -177,7 +184,8 @@ def create_and_sign_certificate(username, email, ca_cert_path="./rootCerts/rootC
         state_or_province_name="stateOrProvinceName",
         organization_name="organizationName",
         organization_unit_name="organizationUnitName",
-        csr_file=csr_file
+        csr_file=csr_file,
+        ca_cert=ca_cert
     )
 
     sign_csr_with_ca(csr_file, ca_cert_path, ca_key_path, cert_file)
