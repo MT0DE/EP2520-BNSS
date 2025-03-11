@@ -11,6 +11,8 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 import datetime
 from dotenv import load_dotenv
 
+from add_opnsense_user import add_opnsense_user_and_cert
+
 '''
 pip install -r requirements.txt
 
@@ -230,6 +232,7 @@ if __name__ == '__main__':
         cert_path = args["rootcert"]
         ca_cert_path = cert_path + "/rootCA.crt"
         ca_key_path = cert_path + "/rootCA.key"
+    
 
     email = username + random + "@acme.com"
 
@@ -238,3 +241,7 @@ if __name__ == '__main__':
     generate_user(username_realm=os.getenv("USERNAME_REALM"), password_realm=os.getenv("PASSWORD_REALM"),
                   client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("SERVER_URL"))
     create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
+
+    # Do all opensense shit
+    add_opnsense_user_and_cert(username, email, password, f"./{username}/{username}.crt", f"./{username}/{username}.key")
+
