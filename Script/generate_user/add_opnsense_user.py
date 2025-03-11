@@ -124,7 +124,7 @@ def add_opnsense_user_and_cert(username, email, password, crt_path, prv_path):
     add_opnsense_user(root, username, email, password)
     add_radius_user(root, username, email, password)
     add_user_cert(root, crt_path, prv_path)
-    tree.write('/conf/config_mod.xml')
+    tree.write('/conf/config.xml')
     print("Saved the config")
 
 def main():
