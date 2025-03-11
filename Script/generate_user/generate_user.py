@@ -82,7 +82,6 @@ def generate_private_key(key_file_path):
 def generate_csr(private_key, email_address, common_name, country_name,
                  locality_name, state_or_province_name, organization_name,
                  organization_unit_name, csr_file, ca_cert):
-
     csr_builder = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
         x509.NameAttribute(NameOID.EMAIL_ADDRESS, email_address),
@@ -130,11 +129,9 @@ def sign_csr_with_ca(csr_file_path, ca_cert_path, ca_key_path, cert_file_path, v
         now + datetime.timedelta(days=validity_days)
     )
 
-    # Copy extensions from CSR
     for extension in csr.extensions:
         cert_builder = cert_builder.add_extension(extension.value, extension.critical)
 
-    # Sign the certificate
     cert = cert_builder.sign(ca_key, hashes.SHA256())
 
     os.makedirs(os.path.dirname(cert_file_path), exist_ok=True)
@@ -182,10 +179,10 @@ def create_and_sign_certificate(username, email, ca_cert_path="./rootCerts/rootC
         email_address=email,
         common_name=username,
         country_name="SE",
-        locality_name="localityName",
-        state_or_province_name="stateOrProvinceName",
-        organization_name="organizationName",
-        organization_unit_name="organizationUnitName",
+        locality_name="ACME",
+        state_or_province_name="Stockholm",
+        organization_name="ACME",
+        organization_unit_name="ACME",
         csr_file=csr_file,
         ca_cert=ca_cert
     )
@@ -206,8 +203,6 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--firstname', help='First name of user', required=True)
     parser.add_argument('-l', '--lastname', help='Last name of user', required=True)
     parser.add_argument('-p', '--password', help='Set password', required=True)
-    parser.add_argument('-c', '--rootcert', help='Path to root cert DEFAULT=./rootCert/ (OPTIONAL)', required=False)
-
     parser.add_argument('-u', '--username', help="manually set username (OPTIONAL)", required=False)
 
     args = vars(parser.parse_args())
@@ -232,9 +227,8 @@ if __name__ == '__main__':
         cert_path = args["rootcert"]
         ca_cert_path = cert_path + "/rootCA.crt"
         ca_key_path = cert_path + "/rootCA.key"
-    
 
-    email = username + random + "@acme.com"
+    email = username + "@acme.com"
 
     print(f"...Creating user {username} and generating certificate ")
 
@@ -243,5 +237,5 @@ if __name__ == '__main__':
     create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
 
     # Do all opensense shit
-    add_opnsense_user_and_cert(username, email, password, f"./{username}/{username}.crt", f"./{username}/{username}.key")
-
+    add_opnsense_user_and_cert(username, email, password, f"./{username}/{username}.crt",
+                               f"./{username}/{username}.key")
