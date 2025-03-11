@@ -118,13 +118,14 @@ def add_radius_user(xml_root, username, email, password):
     ET.SubElement(new_user, "linkedAVPair")
     
 def add_opnsense_user_and_cert(username, email, password, crt_path, prv_path):
-    tree = ET.parse('config.xml')
-    tree.write('config.xml.bak')
+    tree = ET.parse('/conf/config.xml')
+    tree.write('/conf/config.xml.bak')
     root = tree.getroot()
     add_opnsense_user(root, username, email, password)
     add_radius_user(root, username, email, password)
     add_user_cert(root, crt_path, prv_path)
-    tree.write('config_mod.xml')
+    tree.write('/conf/config_mod.xml')
+    print("Saved the config")
 
 def main():
     print("Username: ")
