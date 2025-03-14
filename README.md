@@ -8,6 +8,7 @@
 
 ### Revoking a user certificate in OPNsense
 * To revoke a certificate go to the System ⇒ Trust ⇒ Revocation and update the CRL by adding the certificate that shold be revoked to it. After adding the certificate you must click on the apply button at the bottom. The revocation will be active after at most one minute of time.
+* In keycloak you add the trusted root certificates in the location ```/opt/keycloak/conf/truststores/``` & enable CRL checking in the authentication x.509 login flow & update the "CRL url" path.  
 
 ### Creating a user and generating a x509 certificate
 * A user is added to the system by  running the script  ```generate_user.py -f FIRSTNAME -l LASTNAME -p PASSWORD``` , this script adds the user to both OPNsense and keycloak, (which by implementation also includes nextcloud & the webserver) and generates a valid x509 certificate which can be used when authenticating via keycloak SSO.  
@@ -31,4 +32,16 @@ To use certificate to access wifi:
 ### Assigning a domain name to a new server
 Because of some security features in the DNS and firewall rules, a few OPNsense settings have to be modified to allow new servers on the network.
 First, in OPNsense, go to Services ⇒ Unbound DNS ⇒ Overwrites, and add a domain name for a new server. Then go to the security settings in Unbound and add the domain name to the private domain names. If this is not done, the rebind-attack protection in the DNS server will not allow users to access it.
+
+## Setting up keycloak
+The following command starts the keycloak container with the desired configuration, and enables https using a self signed root certificate for the hostname acme.keycloak.com. 
+
+``` docker run --name keycloak -p 8443:8443 -v ${pwd}:/opt/keycloak/certs -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin keycloak_image start --https-certificate-file=/opt/keycloak/certs/keycloak.crt --https-certificate-key-file=/opt/keycloak/certs/keycloak.key --https-key-store-file=/opt/keycloak/certs/keycloak.p12 --https-key-store-password=adminadmin --https-port=8443 --https-trust-store-file=/opt/keycloak/certs/truststore.jks --https-trust-store-password=adminadmin --https-client-auth=request --https-protocols=TLSv1.2,TLSv1.3 --hostname=acme.keycloak.com ```
+
+## Setting up Nextcloud with keycloak
+In order to use keycloak as a SSO in Nextcloud the Nextcloud addon "Social Login" is used. In order to get the correct endpoints, a client in keycloak is created in order to generate endpoints. In Social Login the endpoints generated in keycloak is specified. 
+
+Nextcloud is setup by first installing snap, and then running the command ```sudo snap install nextcloud```
+
+To enable https on nextcloud you can do so by running ```sudo nextcloud.enable-https custom cert.pem privkey.pem chain.pem ``` (given that a certificate for the specified address already is generated). 
 
