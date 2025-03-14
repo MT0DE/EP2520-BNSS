@@ -26,13 +26,13 @@ PASSWORD_REALM="<password>"
 '''
 
 
-def generate_user(server_url, client_secret_key, username_realm, password_realm):
+def generate_user(server_url, client_secret_key, username_realm, password_realm, password_user):
     user = {"email": email,
             "username": username,
             "enabled": True,
             "firstName": first_name,
             "lastName": last_name,
-            "credentials": [{"value": "secret", "type": "password", }]}
+            "credentials": [{"value": password_user, "type": "password", }]}
     try:
         keycloak_connection_cert = KeycloakOpenIDConnection(
             server_url=server_url,
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     print(f"...Creating user {username} and generating certificate ")
 
     generate_user(username_realm=os.getenv("USERNAME_REALM"), password_realm=os.getenv("PASSWORD_REALM"),
-                  client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("SERVER_URL"))
+                  client_secret_key=os.getenv("CLIENT_SECRET_KEY"), server_url=os.getenv("SERVER_URL"), password_user=password)
     create_and_sign_certificate(username, email, ca_cert_path=ca_cert_path, ca_key_path=ca_key_path)
 
     # Do all opensense shit
