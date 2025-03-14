@@ -10,7 +10,7 @@
 * To revoke a certificate go to the System ⇒ Trust ⇒ Revocation and update the CRL by adding the certificate that shold be revoked to it. After adding the certificate you must click on the apply button at the bottom. The revocation will be active after at most one minute of time.
 
 ### Creating a user and generating a x509 certificate
-* A user is added to the system by  running the script  generate_user.py -f FIRSTNAME -l LASTNAME -p PASSWORD , this script adds the user to both OPNsense and keycloak, (which by implementation also includes nextcloud & the webserver) and generates a valid x509 certificate which can be used when authenticating via keycloak SSO.  
+* A user is added to the system by  running the script  ```generate_user.py -f FIRSTNAME -l LASTNAME -p PASSWORD``` , this script adds the user to both OPNsense and keycloak, (which by implementation also includes nextcloud & the webserver) and generates a valid x509 certificate which can be used when authenticating via keycloak SSO.  
 
 ### Adding two factor authenticator
 * 2FA setup is forced on the first login to keycloak using username and password. Its simply added to the 2fa app by scanning a QRCode shown during login. 
