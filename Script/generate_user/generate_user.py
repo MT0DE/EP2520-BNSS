@@ -208,7 +208,7 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
     cert_path = ""
 
-    random = str(random.randint(1, 9999))
+    random_str = str(random.randint(1, 9999))
 
     if args["firstname"]:
         first_name = args["firstname"]
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     if args["password"]:
         password = args["password"]
     if not args["username"]:
-        username = first_name[0:3] + last_name[0:3] + random
+        username = first_name[0:3] + last_name[0:3] + random_str
     else:
         username = args["username"]
 
